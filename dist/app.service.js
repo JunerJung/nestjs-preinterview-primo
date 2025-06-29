@@ -38,16 +38,17 @@ let AppService = class AppService {
             let encryptedPayload = cipher.update(payload, "utf8", "base64");
             encryptedPayload += cipher.final("base64");
             const encryptedAesKey = crypto
-                .privateEncrypt({
-                key: this.rsaPrivateKey,
-                padding: crypto.constants.RSA_PKCS1_PADDING,
+                .publicEncrypt({
+                key: this.rsaPublicKey,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                oaepHash: "sha256"
             }, aesKey)
                 .toString("base64");
             return {
                 successful: true,
                 data: {
-                    data1: encryptedPayload,
-                    data2: encryptedAesKey,
+                    data1: encryptedAesKey,
+                    data2: encryptedPayload + ":" + iv.toString("base64"),
                 },
             };
         }
@@ -68,6 +69,7 @@ let AppService = class AppService {
                 decryptedAesKey = crypto.privateDecrypt({
                     key: this.rsaPrivateKey,
                     padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                    oaepHash: "sha256"
                 }, Buffer.from(data1, 'base64'));
             }
             catch (rsaError) {
@@ -82,11 +84,8 @@ let AppService = class AppService {
             if (parts.length !== 2) {
                 throw new common_1.BadRequestException('Invalid data2 format. Expected IV:EncryptedPayload.');
             }
-            const iv = Buffer.from(parts[0], 'base64');
-            const encryptedPayloadBase64 = parts[1];
-            if (iv.length !== 16) {
-                throw new common_1.BadRequestException('Invalid IV length. Expected 16 bytes.');
-            }
+            const iv = Buffer.from(parts[1], 'base64');
+            const encryptedPayloadBase64 = parts[0];
             const decipher = crypto.createDecipheriv('aes-256-cbc', decryptedAesKey, iv);
             let decryptedPayload = decipher.update(encryptedPayloadBase64, 'base64', 'utf8');
             decryptedPayload += decipher.final('utf8');

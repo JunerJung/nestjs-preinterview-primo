@@ -45,10 +45,11 @@ export class AppService {
 
       // 4. For data1, encrypt key from step2 with private key.
       const encryptedAesKey = crypto
-        .privateEncrypt(
+        .publicEncrypt(
           {
-            key: this.rsaPrivateKey,
-            padding: crypto.constants.RSA_PKCS1_PADDING,
+            key: this.rsaPublicKey,
+            padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            oaepHash: "sha256"
           },
           aesKey,
         )
@@ -58,8 +59,8 @@ export class AppService {
       return {
         successful: true,
         data: {
-          data1: encryptedPayload,
-          data2: encryptedAesKey,
+          data1: encryptedAesKey,
+          data2: encryptedPayload+":"+iv.toString("base64"),
         },
       };
     } catch (error) {
@@ -83,6 +84,7 @@ export class AppService {
           {
             key: this.rsaPrivateKey,
             padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, // Use OAEP padding
+            oaepHash: "sha256"
           },
           Buffer.from(data1, 'base64') // Data1 is base64 encoded
         );
@@ -100,12 +102,8 @@ export class AppService {
       if (parts.length !== 2) {
         throw new BadRequestException('Invalid data2 format. Expected IV:EncryptedPayload.');
       }
-      const iv = Buffer.from(parts[0], 'base64');
-      const encryptedPayloadBase64 = parts[1];
-
-      if (iv.length !== 16) {
-        throw new BadRequestException('Invalid IV length. Expected 16 bytes.');
-      }
+      const iv = Buffer.from(parts[1], 'base64');
+      const encryptedPayloadBase64 = parts[0];
 
       // 3. Decrypt payload with AES key and IV
       const decipher = crypto.createDecipheriv('aes-256-cbc', decryptedAesKey, iv);
