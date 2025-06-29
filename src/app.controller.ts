@@ -1,12 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post ,HttpCode, HttpStatus, Body} from '@nestjs/common';
 import { AppService } from './app.service';
+import { ApiResponseDto, ProcessPayloadDto } from './app.dto';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Post("/get-encrypt-data")
+  @HttpCode(HttpStatus.OK)
+  getEncrypt(@Body() processPayloadDto: ProcessPayloadDto): ApiResponseDto {
+    return this.appService.GetEncrypt(processPayloadDto);
   }
 }
