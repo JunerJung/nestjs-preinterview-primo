@@ -1,0 +1,69 @@
+# Node.js
+node_modules/
+dist/                     # Compiled output
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.pnp/
+.pnp.js
+
+# Environment variables
+.env
+.env.development
+.env.production
+.env.test
+.env.*.local
+
+# Build artifacts
+coverage/                 # Jest test coverage reports
+*.tsbuildinfo             # TypeScript incremental build files
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# npm package manager cache
+.npm/
+
+# VS Code files
+.vscode/                  # Settings, launch configs, etc. (consider if you want to share workspace settings)
+.vscode/*.log
+.vscode/.vscode-test
+.vscode-test/
+
+# Editor/IDE specific files
+.idea/                    # IntelliJ IDEA / WebStorm projects
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+.history/                 # Local History plugin for IDEs
+
+# Docker
+Dockerfile.local          # If you have a local-only Dockerfile
+docker-compose.local.yml  # If you have a local-only Docker Compose file
+
+# NestJS specific
+/src/**/*.js
+/src/**/*.js.map
+!/src/main.ts             # Keep main.ts as it's the entry point
+!/src/**/index.ts         # Keep index.ts files for modules/barrels
+!/src/**/*.d.ts           # Keep declaration files if they are generated for a library and meant to be committed
+
+# Tests
+*.spec.js
+*.e2e-spec.js
+*.spec.js.map
+*.e2e-spec.js.map
+
+# Prisma
+# If you are using Prisma, you might want to ignore generated client
+# prisma/generated/        # Uncomment if you generate the client into a specific dir and don't want to commit
+# db.sqlite               # If using sqlite for development
+
