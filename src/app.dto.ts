@@ -13,7 +13,7 @@ export class ProcessPayloadDto {
   payload: string;
 }
 
-class ResponseDataDto {
+class EnResponseDataDto {
   @IsString()
   data1: string;
 
@@ -21,7 +21,7 @@ class ResponseDataDto {
   data2: string;
 }
 
-export class ApiResponseDto {
+export class EnApiResponseDto {
   @IsBoolean()
   successful: boolean;
 
@@ -30,7 +30,34 @@ export class ApiResponseDto {
   error_code?: string; // Use '?' to mark it as optional
 
   @IsOptional() // data is optional, only present on success
-  @Type(() => ResponseDataDto) // Important for nested object validation/transformation
+  @Type(() => EnResponseDataDto) // Important for nested object validation/transformation
   @ValidateNested() // Validates the nested object if it exists
-  data?: ResponseDataDto | null; // Use '?' to mark it as optional
+  data?: EnResponseDataDto | null; // Use '?' to mark it as optional
+}
+
+export class DePayloadDto {
+  @IsString()
+  data1: string;
+
+  @IsString()
+  data2: string;
+}
+
+class DecryptedResponseDataDto {
+  @IsString()
+  payload: string;
+}
+
+export class DeApiResponseDto {
+  @IsBoolean()
+  successful: boolean;
+
+  @IsOptional()
+  @IsString()
+  error_code?: string;
+
+  @IsOptional()
+  @Type(() => DecryptedResponseDataDto)
+  @ValidateNested()
+  data?: DecryptedResponseDataDto | null;
 }

@@ -24,16 +24,27 @@ let AppController = class AppController {
     getEncrypt(processPayloadDto) {
         return this.appService.GetEncrypt(processPayloadDto);
     }
+    getDecrypt(decryptPayloadDto) {
+        return this.appService.GetDecrypt(decryptPayloadDto);
+    }
 };
 exports.AppController = AppController;
 __decorate([
-    (0, common_1.Post)("/get-encrypt-data"),
+    (0, common_1.Post)("get-encrypt-data"),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [app_dto_1.ProcessPayloadDto]),
-    __metadata("design:returntype", app_dto_1.ApiResponseDto)
+    __metadata("design:returntype", app_dto_1.EnApiResponseDto)
 ], AppController.prototype, "getEncrypt", null);
+__decorate([
+    (0, common_1.Post)("get-decrypt-data"),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [app_dto_1.DePayloadDto]),
+    __metadata("design:returntype", app_dto_1.DeApiResponseDto)
+], AppController.prototype, "getDecrypt", null);
 exports.AppController = AppController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [app_service_1.AppService])

@@ -16,12 +16,15 @@ const config_1 = require("@nestjs/config");
 let AppService = class AppService {
     configService;
     rsaPrivateKey;
+    rsaPublicKey;
     constructor(configService) {
         this.configService = configService;
         this.rsaPrivateKey =
             this.configService.get("RSA_PRIVATE_KEY") ?? "";
-        if (!this.rsaPrivateKey) {
-            console.error("CRITICAL ERROR: RSA_PRIVATE_KEY environment variable is not set!");
+        this.rsaPublicKey =
+            this.configService.get("RSA_PUBLIC_KEY") ?? "";
+        if (!this.rsaPrivateKey || !this.rsaPublicKey) {
+            console.error("CRITICAL ERROR: RSA_PRIVATE_KEY or RSA_PUBLIC_KEY environment variable is not set!");
             throw new common_1.InternalServerErrorException("Server configuration error: Private key missing.");
         }
         console.log("RSA Private Key successfully loaded from environment variable.");
@@ -34,7 +37,6 @@ let AppService = class AppService {
             const cipher = crypto.createCipheriv("aes-256-cbc", aesKey, iv);
             let encryptedPayload = cipher.update(payload, "utf8", "base64");
             encryptedPayload += cipher.final("base64");
-            const data2Value = iv.toString("base64") + ":" + encryptedPayload;
             const encryptedAesKey = crypto
                 .privateEncrypt({
                 key: this.rsaPrivateKey,
@@ -44,8 +46,8 @@ let AppService = class AppService {
             return {
                 successful: true,
                 data: {
-                    data1: encryptedAesKey,
-                    data2: data2Value,
+                    data1: encryptedPayload,
+                    data2: encryptedAesKey,
                 },
             };
         }
@@ -54,6 +56,59 @@ let AppService = class AppService {
             return {
                 successful: false,
                 error_code: "ENCRYPTION_PROCESSING_ERROR",
+                data: null,
+            };
+        }
+    }
+    GetDecrypt(decryptPayloadDto) {
+        try {
+            const { data1, data2 } = decryptPayloadDto;
+            let decryptedAesKey;
+            try {
+                decryptedAesKey = crypto.privateDecrypt({
+                    key: this.rsaPrivateKey,
+                    padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                }, Buffer.from(data1, 'base64'));
+            }
+            catch (rsaError) {
+                console.error('RSA Decryption Error (data1):', rsaError);
+                return {
+                    successful: false,
+                    error_code: 'RSA_DECRYPTION_FAILED',
+                    data: null,
+                };
+            }
+            const parts = data2.split(':');
+            if (parts.length !== 2) {
+                throw new common_1.BadRequestException('Invalid data2 format. Expected IV:EncryptedPayload.');
+            }
+            const iv = Buffer.from(parts[0], 'base64');
+            const encryptedPayloadBase64 = parts[1];
+            if (iv.length !== 16) {
+                throw new common_1.BadRequestException('Invalid IV length. Expected 16 bytes.');
+            }
+            const decipher = crypto.createDecipheriv('aes-256-cbc', decryptedAesKey, iv);
+            let decryptedPayload = decipher.update(encryptedPayloadBase64, 'base64', 'utf8');
+            decryptedPayload += decipher.final('utf8');
+            return {
+                successful: true,
+                data: {
+                    payload: decryptedPayload,
+                },
+            };
+        }
+        catch (error) {
+            console.error('Error in AppService.decryptData:', error);
+            if (error instanceof common_1.BadRequestException) {
+                return {
+                    successful: false,
+                    error_code: error.message === 'Invalid IV length. Expected 16 bytes.' ? 'INVALID_IV' : 'INVALID_DATA2_FORMAT',
+                    data: null,
+                };
+            }
+            return {
+                successful: false,
+                error_code: 'DECRYPTION_PROCESSING_ERROR',
                 data: null,
             };
         }
