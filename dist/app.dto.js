@@ -18,7 +18,7 @@ class ProcessPayloadDto {
 exports.ProcessPayloadDto = ProcessPayloadDto;
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.Length)(0, 2000, { message: 'Payload must be between 0 and 2000 characters' }),
+    (0, class_validator_1.Length)(0, 2000, { message: "Payload must be between 0 and 2000 characters" }),
     __metadata("design:type", String)
 ], ProcessPayloadDto.prototype, "payload", void 0);
 class ResponseDataDto {
