@@ -22,11 +22,6 @@ let AppService = class AppService {
         this.rsaPrivateKey =
             this.configService.get("RSA_PRIVATE_KEY") ?? "";
         this.rsaPublicKey = this.configService.get("RSA_PUBLIC_KEY") ?? "";
-        if (!this.rsaPrivateKey || !this.rsaPublicKey) {
-            console.error("CRITICAL ERROR: RSA_PRIVATE_KEY or RSA_PUBLIC_KEY environment variable is not set!");
-            throw new common_1.InternalServerErrorException("Server configuration error: Private key missing.");
-        }
-        console.log("RSA Private Key successfully loaded from environment variable.");
     }
     GetEncrypt(payloadDto) {
         try {
@@ -52,10 +47,10 @@ let AppService = class AppService {
             };
         }
         catch (error) {
-            console.error("Error in AppService.processData:", error);
+            console.error("Error GetEncrypt:", error);
             return {
                 successful: false,
-                error_code: "ENCRYPTION_PROCESSING_ERROR",
+                error_code: "Error GetEncrypt",
                 data: null,
             };
         }
@@ -72,17 +67,14 @@ let AppService = class AppService {
                 }, Buffer.from(data1, "base64"));
             }
             catch (rsaError) {
-                console.error("RSA Decryption Error (data1):", rsaError);
+                console.error("Error decryptedAesKey:", rsaError);
                 return {
                     successful: false,
-                    error_code: "RSA_DECRYPTION_FAILED",
+                    error_code: "Error decryptedAesKey",
                     data: null,
                 };
             }
             const parts = data2.split(":");
-            if (parts.length !== 2) {
-                throw new common_1.BadRequestException("Invalid data2 format. Expected IV:EncryptedPayload.");
-            }
             const iv = Buffer.from(parts[1], "base64");
             const encryptedPayloadBase64 = parts[0];
             const decipher = crypto.createDecipheriv("aes-256-cbc", decryptedAesKey, iv);
@@ -96,7 +88,7 @@ let AppService = class AppService {
             };
         }
         catch (error) {
-            console.error("Error in AppService.decryptData:", error);
+            console.error("Error GetDecrypt:", error);
             if (error instanceof common_1.BadRequestException) {
                 return {
                     successful: false,
@@ -106,7 +98,7 @@ let AppService = class AppService {
             }
             return {
                 successful: false,
-                error_code: "DECRYPTION_PROCESSING_ERROR",
+                error_code: "Error GetDecrypt",
                 data: null,
             };
         }
