@@ -21,8 +21,7 @@ let AppService = class AppService {
         this.configService = configService;
         this.rsaPrivateKey =
             this.configService.get("RSA_PRIVATE_KEY") ?? "";
-        this.rsaPublicKey =
-            this.configService.get("RSA_PUBLIC_KEY") ?? "";
+        this.rsaPublicKey = this.configService.get("RSA_PUBLIC_KEY") ?? "";
         if (!this.rsaPrivateKey || !this.rsaPublicKey) {
             console.error("CRITICAL ERROR: RSA_PRIVATE_KEY or RSA_PUBLIC_KEY environment variable is not set!");
             throw new common_1.InternalServerErrorException("Server configuration error: Private key missing.");
@@ -41,7 +40,7 @@ let AppService = class AppService {
                 .publicEncrypt({
                 key: this.rsaPublicKey,
                 padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-                oaepHash: "sha256"
+                oaepHash: "sha256",
             }, aesKey)
                 .toString("base64");
             return {
@@ -69,26 +68,26 @@ let AppService = class AppService {
                 decryptedAesKey = crypto.privateDecrypt({
                     key: this.rsaPrivateKey,
                     padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-                    oaepHash: "sha256"
-                }, Buffer.from(data1, 'base64'));
+                    oaepHash: "sha256",
+                }, Buffer.from(data1, "base64"));
             }
             catch (rsaError) {
-                console.error('RSA Decryption Error (data1):', rsaError);
+                console.error("RSA Decryption Error (data1):", rsaError);
                 return {
                     successful: false,
-                    error_code: 'RSA_DECRYPTION_FAILED',
+                    error_code: "RSA_DECRYPTION_FAILED",
                     data: null,
                 };
             }
-            const parts = data2.split(':');
+            const parts = data2.split(":");
             if (parts.length !== 2) {
-                throw new common_1.BadRequestException('Invalid data2 format. Expected IV:EncryptedPayload.');
+                throw new common_1.BadRequestException("Invalid data2 format. Expected IV:EncryptedPayload.");
             }
-            const iv = Buffer.from(parts[1], 'base64');
+            const iv = Buffer.from(parts[1], "base64");
             const encryptedPayloadBase64 = parts[0];
-            const decipher = crypto.createDecipheriv('aes-256-cbc', decryptedAesKey, iv);
-            let decryptedPayload = decipher.update(encryptedPayloadBase64, 'base64', 'utf8');
-            decryptedPayload += decipher.final('utf8');
+            const decipher = crypto.createDecipheriv("aes-256-cbc", decryptedAesKey, iv);
+            let decryptedPayload = decipher.update(encryptedPayloadBase64, "base64", "utf8");
+            decryptedPayload += decipher.final("utf8");
             return {
                 successful: true,
                 data: {
@@ -97,17 +96,17 @@ let AppService = class AppService {
             };
         }
         catch (error) {
-            console.error('Error in AppService.decryptData:', error);
+            console.error("Error in AppService.decryptData:", error);
             if (error instanceof common_1.BadRequestException) {
                 return {
                     successful: false,
-                    error_code: error.message === 'Invalid IV length. Expected 16 bytes.' ? 'INVALID_IV' : 'INVALID_DATA2_FORMAT',
+                    error_code: error.message,
                     data: null,
                 };
             }
             return {
                 successful: false,
-                error_code: 'DECRYPTION_PROCESSING_ERROR',
+                error_code: "DECRYPTION_PROCESSING_ERROR",
                 data: null,
             };
         }

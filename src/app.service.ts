@@ -1,5 +1,14 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
-import { DeApiResponseDto, DePayloadDto, EnApiResponseDto, ProcessPayloadDto } from "./app.dto";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from "@nestjs/common";
+import {
+  DeApiResponseDto,
+  DePayloadDto,
+  EnApiResponseDto,
+  ProcessPayloadDto,
+} from "./app.dto";
 import * as crypto from "crypto";
 import { ConfigService } from "@nestjs/config";
 
@@ -11,8 +20,7 @@ export class AppService {
   constructor(private configService: ConfigService) {
     this.rsaPrivateKey =
       this.configService.get<string>("RSA_PRIVATE_KEY") ?? "";
-    this.rsaPublicKey =
-      this.configService.get<string>("RSA_PUBLIC_KEY") ?? "";
+    this.rsaPublicKey = this.configService.get<string>("RSA_PUBLIC_KEY") ?? "";
 
     if (!this.rsaPrivateKey || !this.rsaPublicKey) {
       console.error(
@@ -49,7 +57,7 @@ export class AppService {
           {
             key: this.rsaPublicKey,
             padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-            oaepHash: "sha256"
+            oaepHash: "sha256",
           },
           aesKey,
         )
@@ -60,7 +68,7 @@ export class AppService {
         successful: true,
         data: {
           data1: encryptedAesKey,
-          data2: encryptedPayload+":"+iv.toString("base64"),
+          data2: encryptedPayload + ":" + iv.toString("base64"),
         },
       };
     } catch (error) {
@@ -79,36 +87,45 @@ export class AppService {
       // 1. Decrypt data1 (RSA-encrypted AES key) using the private key
       let decryptedAesKey: Buffer;
       try {
-        // Changed padding to RSA_PKCS1_OAEP_PADDING to match encryption
         decryptedAesKey = crypto.privateDecrypt(
           {
             key: this.rsaPrivateKey,
-            padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, // Use OAEP padding
-            oaepHash: "sha256"
+            padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            oaepHash: "sha256",
           },
-          Buffer.from(data1, 'base64') // Data1 is base64 encoded
+          Buffer.from(data1, "base64"),
         );
       } catch (rsaError) {
-        console.error('RSA Decryption Error (data1):', rsaError);
+        console.error("RSA Decryption Error (data1):", rsaError);
         return {
           successful: false,
-          error_code: 'RSA_DECRYPTION_FAILED',
+          error_code: "RSA_DECRYPTION_FAILED",
           data: null,
         };
       }
 
       // 2. Extract IV and encrypted payload from data2
-      const parts = data2.split(':');
+      const parts = data2.split(":");
       if (parts.length !== 2) {
-        throw new BadRequestException('Invalid data2 format. Expected IV:EncryptedPayload.');
+        throw new BadRequestException(
+          "Invalid data2 format. Expected IV:EncryptedPayload.",
+        );
       }
-      const iv = Buffer.from(parts[1], 'base64');
+      const iv = Buffer.from(parts[1], "base64");
       const encryptedPayloadBase64 = parts[0];
 
       // 3. Decrypt payload with AES key and IV
-      const decipher = crypto.createDecipheriv('aes-256-cbc', decryptedAesKey, iv);
-      let decryptedPayload = decipher.update(encryptedPayloadBase64, 'base64', 'utf8');
-      decryptedPayload += decipher.final('utf8');
+      const decipher = crypto.createDecipheriv(
+        "aes-256-cbc",
+        decryptedAesKey,
+        iv,
+      );
+      let decryptedPayload = decipher.update(
+        encryptedPayloadBase64,
+        "base64",
+        "utf8",
+      );
+      decryptedPayload += decipher.final("utf8");
 
       return {
         successful: true,
@@ -117,18 +134,17 @@ export class AppService {
         },
       };
     } catch (error) {
-      console.error('Error in AppService.decryptData:', error);
-      // Handle specific errors for invalid input formats or generic decryption errors
+      console.error("Error in AppService.decryptData:", error);
       if (error instanceof BadRequestException) {
         return {
           successful: false,
-          error_code: error.message === 'Invalid IV length. Expected 16 bytes.' ? 'INVALID_IV' : 'INVALID_DATA2_FORMAT',
+          error_code: error.message,
           data: null,
         };
       }
       return {
         successful: false,
-        error_code: 'DECRYPTION_PROCESSING_ERROR',
+        error_code: "DECRYPTION_PROCESSING_ERROR",
         data: null,
       };
     }
